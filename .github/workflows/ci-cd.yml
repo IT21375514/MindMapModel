@@ -1,0 +1,71 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: 🧪 Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint with flake8
+        run: |
+          pip install flake8
+          # Only lint main.py for now
+          flake8 main.py
+
+      - name: Smoke-run Uvicorn (port conflict disabled)
+        run: |
+          # fire up Uvicorn in the background to test import & startup
+          pip install uvicorn
+          timeout 10 uvicorn main:app --host 127.0.0.1 --port 9000 &
+          sleep 5
+          # check that port 9000 is listening
+          ss -ltn | grep ':9000'
+          killall uvicorn
+
+  deploy:
+    name: 🚀 Deploy to VM
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy repo to VM
+        uses: burnett01/rsync-deployments@v4
+        with:
+          switches: -avz --delete
+          path: .
+          remote_path: /opt/mindmap
+          remote_host: ${{ secrets.VM_HOST }}
+          remote_user: ${{ secrets.VM_USER }}
+          ssh_key: ${{ secrets.VM_SSH_KEY }}
+
+      - name: SSH into VM and restart
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd /opt/mindmap
+            source venv/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt
+            sudo systemctl restart mindmap
