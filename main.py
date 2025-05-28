@@ -234,8 +234,9 @@ async def extend_text(request: MindMapRequest):
     try:
         cleaned_text = preprocess_text(request.content)
         extended_text = get_response(
-            "Extend, expand, and enrich the following text by providing deeper "
-            "detail, relevant examples, and additional context, while preserving "
+            "Extend, expand, and enrich the following "
+            "text by providing deeper detail, relevant "
+            "examples, and additional context, while preserving "
             "its original meaning and style:",
             cleaned_text
         )
