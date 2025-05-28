@@ -2,18 +2,18 @@ import os
 import re
 import json
 import torch
-import threading
 import uvicorn
-import nest_asyncio
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from dotenv import load_dotenv
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
 
 # ----------------------------------------------
 # 1) Load environment variables from a .env file
 # ----------------------------------------------
-from dotenv import load_dotenv
 load_dotenv()
 
 # Retrieve the Hugging Face token from the environment
@@ -32,20 +32,19 @@ os.environ["HF_HOME"] = cache_dir
 os.environ["HF_HUB_CACHE"] = cache_dir
 
 # -------------------------------------------------
-# 3) Import from transformers + peft
+# 3) Model & tokenizer load
 # -------------------------------------------------
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from peft import PeftModel
 
-# Model repository and config
-adapter_model_path = "Sanjayan201/mistral-7b-v0.3-finetuned-for-mindmap-lora"
+adapter_model_path = (
+    "Sanjayan201/mistral-7b-v0.3-finetuned-for-mindmap-lora"
+)
 base_model_name = "mistralai/Mistral-7B-v0.3"
-max_seq_length = 4096
+max_seq_length = 2048
 
 print("Loading base model on CPU (float32)...")
 base_model = AutoModelForCausalLM.from_pretrained(
     base_model_name,
-    torch_dtype=torch.float32,    # standard CPU float
+    torch_dtype=torch.float32,
     use_auth_token=hf_token
 )
 
@@ -90,6 +89,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/", tags=["health"])
+async def root():
+    return {
+        "status": "ok",
+        "service": "mindmap",
+        "version": "1.0.0",
+    }
 
 class MindMapRequest(BaseModel):
     content: str = ""
@@ -213,9 +220,6 @@ async def extend_text(request: MindMapRequest):
         return mindmap_obj
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-# Some environments need nest_asyncio. On a normal VM, you typically do NOT need it.
-# nest_asyncio.apply()
 
 # You can either run uvicorn directly from code:
 def run_server():
