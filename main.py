@@ -188,7 +188,7 @@ def fix_incomplete_json(json_str: str) -> str:
 def get_mindmap(text: str) -> dict:
     mindmap_response = get_response(
         "Convert the following text into a structured JSON mind map "
-        "with parent node and logical nested subnodes:"
+        "with parent node and logical nested subnodes:",
         text
     )
     try:
@@ -236,7 +236,7 @@ async def extend_text(request: MindMapRequest):
         extended_text = get_response(
             "Extend, expand, and enrich the following text by providing deeper "
             "detail, relevant examples, and additional context, while preserving "
-            "its original meaning and style:"
+            "its original meaning and style:",
             cleaned_text
         )
         mindmap_obj = get_mindmap(extended_text)
