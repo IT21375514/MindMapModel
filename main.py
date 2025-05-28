@@ -69,13 +69,14 @@ model.eval()
 print("Model loaded on CPU.")
 
 # Alpaca-style prompt template
-alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
-### Instruction:
-{}
-### Input:
-{}
-### Response:
-{}"""
+alpaca_prompt = (
+    "Below is an instruction that describes a task, paired with an input "
+    "that provides further context. Write a response that appropriately "
+    "completes the request.\n"
+    "### Instruction:\n{}\n"
+    "### Input:\n{}\n"
+    "### Response:\n{}"
+)
 
 # -------------------------------------------------
 # FastAPI App
@@ -89,6 +90,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/", tags=["health"])
 async def root():
@@ -105,12 +107,12 @@ class MindMapRequest(BaseModel):
 
 def remove_emoji(text: str) -> str:
     emoji_pattern = re.compile(
-        "[" 
+        "["
         u"\U0001F600-\U0001F64F"  # emoticons
         u"\U0001F300-\U0001F5FF"  # symbols & pictographs
         u"\U0001F680-\U0001F6FF"  # transport & map symbols
         u"\U0001F1E0-\U0001F1FF"  # flags
-        "]+", 
+        "]+",
         flags=re.UNICODE
     )
     return emoji_pattern.sub(r'', text)
@@ -128,7 +130,10 @@ def tokenize_prompt(instruction: str, content: str):
     if inputs.input_ids.shape[1] > max_seq_length:
         raise HTTPException(
             status_code=400,
-            detail=f"Input text too long, got {inputs.input_ids.shape[1]} tokens."
+            detail=(
+                f"Input text too long, got "
+                f"{inputs.input_ids.shape[1]} tokens."
+            ),
         )
     return inputs
 
@@ -139,8 +144,10 @@ def get_response(instruction: str, content: str) -> str:
         # Ensure on CPU
         inputs = {k: v.to("cpu") for k, v in inputs.items()}
         outputs = model.generate(**inputs, max_new_tokens=2048, use_cache=True)
-        full_response = tokenizer.batch_decode(outputs, skip_special_tokens=True)[0]
-
+        full_response = tokenizer.batch_decode(
+            outputs,
+            skip_special_tokens=True,
+        )[0]
     if "### Response:" in full_response:
         return full_response.split("### Response:")[1].strip()
     else:
@@ -167,7 +174,10 @@ def fix_incomplete_json(json_str: str) -> str:
         elif char in '}]':
             if stack:
                 last = stack[-1]
-                if (last == '{' and char == '}') or (last == '[' and char == ']'):
+                if (
+                    (last == "{" and char == "}")
+                    or (last == "[" and char == "]")
+                ):
                     stack.pop()
     closing_map = {'{': '}', '[': ']'}
     while stack:
@@ -177,7 +187,8 @@ def fix_incomplete_json(json_str: str) -> str:
 
 def get_mindmap(text: str) -> dict:
     mindmap_response = get_response(
-        "Convert the following text into a structured JSON mind map with parent node and logical nested subnodes:",
+        "Convert the following text into a structured JSON mind map "
+        "with parent node and logical nested subnodes:"
         text
     )
     try:
@@ -223,7 +234,9 @@ async def extend_text(request: MindMapRequest):
     try:
         cleaned_text = preprocess_text(request.content)
         extended_text = get_response(
-            "Extend, expand, and enrich the following text by providing deeper detail, relevant examples, and additional context, while preserving its original meaning and style:",
+            "Extend, expand, and enrich the following text by providing deeper "
+            "detail, relevant examples, and additional context, while preserving "
+            "its original meaning and style:"
             cleaned_text
         )
         mindmap_obj = get_mindmap(extended_text)
