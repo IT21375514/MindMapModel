@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+transformers
+torch
+nest_asyncio
+pydantic
+protobuf==3.20.3
+peft
+sentencepiece
+python-dotenv
