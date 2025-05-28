@@ -215,7 +215,7 @@ async def extend_text(request: MindMapRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 # Some environments need nest_asyncio. On a normal VM, you typically do NOT need it.
-nest_asyncio.apply()
+# nest_asyncio.apply()
 
 # You can either run uvicorn directly from code:
 def run_server():
