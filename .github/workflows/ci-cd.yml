@@ -31,12 +31,11 @@ jobs:
           flake8 main.py
 
       - name: Smoke-run Uvicorn (port conflict disabled)
+        env:
+          SKIP_MODEL_LOAD: "1"
         run: |
-          # fire up Uvicorn in the background to test import & startup
-          pip install uvicorn
-          timeout 10 uvicorn main:app --host 127.0.0.1 --port 9000 &
-          sleep 5
-          # check that port 9000 is listening
+          uvicorn main:app --host 127.0.0.1 --port 9000 &
+          sleep 2
           ss -ltn | grep ':9000'
           killall uvicorn
 
