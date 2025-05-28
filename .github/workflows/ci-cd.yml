@@ -48,9 +48,9 @@ jobs:
             # If /opt/mindmap exists, pull; else clone fresh
             if [ -d /opt/mindmap ]; then
               cd /opt/mindmap
-              git reset --hard HEAD
-              git clean -fd
-              git pull origin main
+              git fetch origin main
+              git checkout main
+              git pull --ff-only origin main
             else
               git clone https://github.com/IT21375514/MindMapModel.git /opt/mindmap
               cd /opt/mindmap
@@ -68,6 +68,9 @@ jobs:
             # Install any new deps
             pip install --upgrade pip
             pip install -r requirements.txt
+
+            # Reload systemd to pick up any changes to the unit file
+            sudo systemctl daemon-reload 
 
             # Restart the systemd service
             sudo systemctl restart mindmap
