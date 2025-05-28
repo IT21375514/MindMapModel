@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Copy repo to VM
-        uses: burnett01/rsync-deployments@v5
+        uses: burnett01/rsync-deployments@v2
         with:
           switches: -avz --delete
           path: .
