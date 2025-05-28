@@ -56,8 +56,8 @@ tokenizer = AutoTokenizer.from_pretrained(
 
 print("Attaching LoRA adapter...")
 model = PeftModel.from_pretrained(
-    base_model, 
-    adapter_model_path, 
+    base_model,
+    adapter_model_path,
     use_auth_token=hf_token
 )
 
@@ -98,8 +98,10 @@ async def root():
         "version": "1.0.0",
     }
 
+
 class MindMapRequest(BaseModel):
     content: str = ""
+
 
 def remove_emoji(text: str) -> str:
     emoji_pattern = re.compile(
@@ -113,10 +115,12 @@ def remove_emoji(text: str) -> str:
     )
     return emoji_pattern.sub(r'', text)
 
+
 def preprocess_text(text: str) -> str:
     text = remove_emoji(text)
     text = re.sub(r'\s+', ' ', text)
     return text.strip()
+
 
 def tokenize_prompt(instruction: str, content: str):
     prompt = alpaca_prompt.format(instruction, content, "")
@@ -127,6 +131,7 @@ def tokenize_prompt(instruction: str, content: str):
             detail=f"Input text too long, got {inputs.input_ids.shape[1]} tokens."
         )
     return inputs
+
 
 def get_response(instruction: str, content: str) -> str:
     with torch.no_grad():
@@ -140,6 +145,7 @@ def get_response(instruction: str, content: str) -> str:
         return full_response.split("### Response:")[1].strip()
     else:
         return full_response.strip()
+
 
 def fix_incomplete_json(json_str: str) -> str:
     stack = []
@@ -168,6 +174,7 @@ def fix_incomplete_json(json_str: str) -> str:
         json_str += closing_map[stack.pop()]
     return json_str
 
+
 def get_mindmap(text: str) -> dict:
     mindmap_response = get_response(
         "Convert the following text into a structured JSON mind map with parent node and logical nested subnodes:",
@@ -186,6 +193,7 @@ def get_mindmap(text: str) -> dict:
                        + str(e2) + ". Raw response: " + mindmap_response
             )
 
+
 @app.post("/generate")
 async def generate_mindmap(request: MindMapRequest):
     try:
@@ -194,6 +202,7 @@ async def generate_mindmap(request: MindMapRequest):
         return mindmap_obj
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/simplify")
 async def simplify_text(request: MindMapRequest):
@@ -208,6 +217,7 @@ async def simplify_text(request: MindMapRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/extend")
 async def extend_text(request: MindMapRequest):
     try:
@@ -220,6 +230,7 @@ async def extend_text(request: MindMapRequest):
         return mindmap_obj
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # You can either run uvicorn directly from code:
 def run_server():
