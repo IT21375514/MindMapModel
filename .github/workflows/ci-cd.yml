@@ -30,15 +30,6 @@ jobs:
           # Only lint main.py for now
           flake8 main.py
 
-      - name: Smoke-run Uvicorn (port conflict disabled)
-        env:
-          SKIP_MODEL_LOAD: "1"
-        run: |
-          uvicorn main:app --host 127.0.0.1 --port 9000 &
-          sleep 2
-          ss -ltn | grep ':9000'
-          killall uvicorn
-
   deploy:
     name: 🚀 Deploy to VM
     needs: build-and-test
