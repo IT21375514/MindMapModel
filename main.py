@@ -96,7 +96,7 @@ app.add_middleware(
 async def root():
     return {
         "status": "ok",
-        "service": "mindmap",
+        "service": "mindmap.service",
         "version": "1.0.0",
     }
 
