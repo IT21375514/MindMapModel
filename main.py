@@ -39,7 +39,7 @@ adapter_model_path = (
     "Sanjayan201/mistral-7b-v0.3-finetuned-for-mindmap-lora"
 )
 base_model_name = "mistralai/Mistral-7B-v0.3"
-max_seq_length = 2048
+max_seq_length = 1024
 
 print("Loading base model on CPU (float32)...")
 base_model = AutoModelForCausalLM.from_pretrained(
@@ -96,7 +96,7 @@ app.add_middleware(
 async def root():
     return {
         "status": "ok",
-        "service": "mindmap.service",
+        "service": "mindmap",
         "version": "1.0.0",
     }
 
